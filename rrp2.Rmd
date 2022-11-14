@@ -1,0 +1,118 @@
+---
+title: "rrp2"
+author: "Jiaming Li"
+date: "2022-11-13"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Load the data and packages
+```{r}
+rm(list= ls())
+
+# now download file
+if (!file.exists("StormData.csv.bz2")) {
+    fileURL <- 'https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2'
+    download.file(fileURL, destfile='StormData.csv.bz2', method = 'curl')
+}
+noaaDF <- read.csv(bzfile('StormData.csv.bz2'),header=TRUE, stringsAsFactors = FALSE)
+```
+
+
+```{r}
+library(dplyr)
+library(tidyr)
+library(lubridate)
+library(ggplot2)
+```
+
+
+## Preliminary analysis
+Summary of the dataset
+```{r}
+summary(noaaDF)
+```
+
+The structure of the dataset
+```{r}
+str(noaaDF)
+```
+
+
+## Result
+
+### Address the question of which types of events are most harmful to population health
+The fatalities:
+```{r}
+totFatalities <- aggregate(noaaDF$FATALITIES, by = list(noaaDF$EVTYPE), "sum")
+names(totFatalities) <- c("Event", "Fatalities")
+totFatalitiesSorted <- totFatalities[order(-totFatalities$Fatalities), ][1:20, ]
+totFatalitiesSorted
+```
+
+The injuries:
+```{r}
+totInjuries <- aggregate(noaaDF$INJURIES, by = list(noaaDF$EVTYPE), "sum")
+names(totInjuries) <- c("Event", "Injuries")
+totInjuriesSorted <- totInjuries[order(-totInjuries$Injuries), ][1:20, ]
+totInjuriesSorted
+```
+
+Draw a plot:
+```{r}
+par(mfrow = c(1, 2), mar = c(10, 4, 2, 2), las = 3, cex = 0.7, cex.main = 1.4, cex.lab = 1.2)
+barplot(totFatalitiesSorted$Fatalities, names.arg = totFatalitiesSorted$Event, col = 'red',
+        main = 'Top 20 Weather Events for Fatalities', ylab = 'Number of Fatalities')
+barplot(totInjuriesSorted$Injuries, names.arg = totInjuriesSorted$Event, col = 'orange',
+        main = 'Top 20 Weather Events for Injuries', ylab = 'Number of Injuries')
+```
+
+Thus we see that Tornados cause most deaths and injuries in the U.S. National Oceanic and Atmospheric Administration’s (NOAA) storm database. But Excessive heat causes second most deaths, whereas as far as injuries are conserned second to fourth causes have very similar values.
+
+
+### address the question of which types of events have the greatest economic consequences
+
+The property:
+```{r}
+totProperty <- aggregate(noaaDF$PROPDMG, by = list(noaaDF$EVTYPE), "sum")
+names(totProperty) <- c("Event", "Property")
+totPropertySorted <- totProperty[order(-totProperty$Property), ][1:20, ]
+totPropertySorted
+```
+
+The crop:
+```{r}
+totCrop <- aggregate(noaaDF$CROPDMG, by = list(noaaDF$EVTYPE), "sum")
+names(totCrop) <- c("Event", "Crop")
+totCropSorted <- totCrop[order(-totCrop$Crop), ][1:20, ]
+totCropSorted
+```
+
+Draw a plot:
+```{r}
+par(mfrow = c(1, 2), mar = c(10, 4, 2, 2), las = 3, cex = 0.7, cex.main = 1.4, cex.lab = 1.2)
+barplot(totPropertySorted$Property, names.arg = totPropertySorted$Event, col = 'Brown',
+        main = 'Top 20 Weather Events for Property Damage ', ylab = 'Amount of Property Damage', ylim = c(0, 3500000))
+barplot(totCropSorted$Crop, names.arg = totCropSorted$Event, col = 'Green',
+        main = 'Top 20 Weather Events for Crop Damage', ylab = 'Amount of  Crop Damage', ylim = c(0, 3500000))
+```
+
+Add both components together:
+```{r}
+totTotalCost <- aggregate(noaaDF$CROPDMG+noaaDF$PROPDMG, by = list(noaaDF$EVTYPE), "sum")
+names(totTotalCost) <- c("Event", "TotalCost")
+totTotalCostSorted <- totTotalCost[order(-totTotalCost$TotalCost), ][1:20, ]
+totTotalCostSorted
+```
+
+plot:
+```{r}
+par(mfrow = c(1,1), mar = c(10, 4, 2, 2), las = 3, cex = 0.7, cex.main = 1.4, cex.lab = 1.2)
+barplot(totTotalCostSorted$TotalCost, names.arg = totTotalCostSorted$Event, col = 'Black',
+        main = 'Top 20 Weather Events for total Damage ', ylab = 'Amount of total Damage', ylim = c(0, 3500000))
+```
+
+Thus tornadoes cause the most total damage.
